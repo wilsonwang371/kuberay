@@ -197,30 +197,35 @@ func (r *RayClusterReconciler) reconcilePods(instance *rayiov1alpha1.RayCluster)
 			return fmt.Errorf("head pod %s is not running nor pending", headPod.Name)
 		}
 	}
-	if len(headPods.Items) == 0 || headPods.Items == nil {
-		// create head pod
-		log.Info("reconcilePods ", "creating head pod for cluster", instance.Name)
-		if err := r.createHeadPod(*instance); err != nil {
-			return err
-		}
-	} else if len(headPods.Items) > 1 {
-		log.Info("reconcilePods ", "more than 1 head pod found for cluster", instance.Name)
+
+	// Reconcile head pods now
+	{
+		// delete pods with invalid state
+		var podsToDelete []corev1.Pod
 		itemLength := len(headPods.Items)
 		for index := 0; index < itemLength; index++ {
-			if headPods.Items[index].Status.Phase == v1.PodRunning || headPods.Items[index].Status.Phase == v1.PodPending {
-				// Remove the healthy pod  at index i from the list of pods to delete
-				headPods.Items[index] = headPods.Items[len(headPods.Items)-1] // replace last element with the healthy head.
-				headPods.Items = headPods.Items[:len(headPods.Items)-1]       // Truncate slice.
-				itemLength--
+			if headPods.Items[index].Status.Phase != v1.PodRunning && headPods.Items[index].Status.Phase != v1.PodPending {
+				podsToDelete = append(podsToDelete, headPods.Items[index])
 			}
 		}
-		// delete all the extra head pod pods
-		for _, extraHeadPodToDelete := range headPods.Items {
-			if err := r.Delete(context.TODO(), &extraHeadPodToDelete); err != nil {
+		for _, podToDelete := range podsToDelete {
+			if err := r.Delete(context.TODO(), &podToDelete); err != nil {
+				return err
+			}
+		}
+
+		if instance.Spec.HeadGroupSpec.Replicas == nil {
+			panic("Replicas must be specified")
+		}
+		itemToCreate := (int)(*instance.Spec.HeadGroupSpec.Replicas) - (itemLength - len(podsToDelete))
+		for i := 0; i < itemToCreate; i++ {
+			log.Info("reconcilePods ", "creating head pod for cluster", instance.Name)
+			if err := r.createHeadPod(*instance); err != nil {
 				return err
 			}
 		}
 	}
+
 	// Reconcile worker pods now
 	for index, worker := range instance.Spec.WorkerGroupSpecs {
 		workerPods := corev1.PodList{}
