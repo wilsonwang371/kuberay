@@ -195,7 +195,7 @@ var _ = Context("Inside the default namespace", func() {
 			// adding a scale down
 			Eventually(
 				getResourceFunc(ctx, client.ObjectKey{Name: myRayCluster.Name, Namespace: "default"}, myRayCluster),
-				time.Second*3, time.Millisecond*500).Should(BeNil(), "My raycluster = %v", myRayCluster)
+				time.Second*6, time.Millisecond*500).Should(BeNil(), "My raycluster = %v", myRayCluster)
 			rep := new(int32)
 			*rep = 2
 			myRayCluster.Spec.WorkerGroupSpecs[0].Replicas = rep
@@ -213,14 +213,14 @@ var _ = Context("Inside the default namespace", func() {
 			// retry listing pods, given that last update may not immediately happen.
 			Eventually(
 				listResourceFunc(ctx, &workerPods, filterLabels, &client.ListOptions{Namespace: "default"}),
-				time.Second*15, time.Millisecond*500).Should(Equal(2), fmt.Sprintf("workerGroup %v", workerPods.Items))
+				time.Second*30, time.Millisecond*500).Should(Equal(2), fmt.Sprintf("workerGroup %v", workerPods.Items))
 		})
 
 		It("should update a raycluster object", func() {
 			// adding a scale strategy
 			Eventually(
 				getResourceFunc(ctx, client.ObjectKey{Name: myRayCluster.Name, Namespace: "default"}, myRayCluster),
-				time.Second*3, time.Millisecond*500).Should(BeNil(), "My raycluster = %v", myRayCluster)
+				time.Second*6, time.Millisecond*500).Should(BeNil(), "My raycluster = %v", myRayCluster)
 
 			podToDelete1 := workerPods.Items[0]
 			rep := new(int32)

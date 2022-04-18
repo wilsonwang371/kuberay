@@ -6,6 +6,9 @@ import (
 	"strings"
 	"time"
 
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+
 	rbacv1 "k8s.io/api/rbac/v1"
 
 	rayiov1alpha1 "github.com/ray-project/kuberay/ray-operator/api/raycluster/v1alpha1"
@@ -529,7 +532,33 @@ func (r *RayClusterReconciler) SetupWithManager(mgr ctrl.Manager, reconcileConcu
 			OwnerType:    &rayiov1alpha1.RayCluster{},
 		}).
 		WithOptions(controller.Options{MaxConcurrentReconciles: reconcileConcurrency}).
+		WithEventFilter(predicate.Funcs{
+			CreateFunc:  r.CreateFunc,
+			DeleteFunc:  r.DeleteFunc,
+			UpdateFunc:  r.UpdateFunc,
+			GenericFunc: r.GenericFunc,
+		}).
 		Complete(r)
+}
+
+func (r *RayClusterReconciler) CreateFunc(e event.CreateEvent) bool {
+	log.Info(fmt.Sprintf("CREATE event:\n %+v\n", e.Object))
+	return true
+}
+
+func (r *RayClusterReconciler) UpdateFunc(e event.UpdateEvent) bool {
+	log.Info(fmt.Sprintf("UPDATE event: \n%+v -> \n%+v\n", e.ObjectOld, e.ObjectNew))
+	return true
+}
+
+func (r *RayClusterReconciler) DeleteFunc(e event.DeleteEvent) bool {
+	log.Info(fmt.Sprintf("DELETE event: \n%+v\n", e.Object))
+	return true
+}
+
+func (r *RayClusterReconciler) GenericFunc(e event.GenericEvent) bool {
+	log.Info(fmt.Sprintf("GENERIC event: \n%+v\n", e.Object))
+	return true
 }
 
 func (r *RayClusterReconciler) updateStatus(instance *rayiov1alpha1.RayCluster) error {
