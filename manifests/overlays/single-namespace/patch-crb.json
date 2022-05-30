@@ -1,0 +1,17 @@
+[
+  {
+    "op": "replace",
+    "path": "/kind",
+    "value": "RoleBinding"
+  },
+  {
+    "op": "replace",
+    "path": "/metadata/namespace",
+    "value": "ray-system"
+  },
+  {
+    "op": "replace",
+    "path": "/roleRef/kind",
+    "value": "Role"
+  }
+]

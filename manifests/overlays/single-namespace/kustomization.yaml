@@ -1,0 +1,14 @@
+# This overlay patches in KubeRay operator configuration
+# necessary for KubeRay single namespace support.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+bases:
+- ../../base
+patches:
+- path: patch-cr.json
+  target:
+    kind: ClusterRole
+- path: patch-crb.json
+  target:
+    kind: ClusterRoleBinding
